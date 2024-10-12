@@ -11,8 +11,13 @@ public class TaskStatus {
     StatusKind status;
     String errMsg;
 
+    public TaskStatus(StatusKind status) {
+        this.status = status;
+    }
+
     public TaskStatus(StatusKind status, String errorMsg) {
         this.status = status;
+        this.errMsg = errorMsg;
     }
 
     public StatusKind getStatus() {

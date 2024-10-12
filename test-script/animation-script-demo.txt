@@ -51,10 +51,10 @@ Persistent {
         a3 = (500, 300)
         a4 = (500, 100)
         Syncronous {
-        DrawLine(a1, a2, 1)
-        DrawLine(a2, a3, 1)
-        DrawLine(a3, a4, 1)
-        DrawLine(a4, a1, 1)
+            DrawLine(a1, a2, 1)
+            DrawLine(a2, a3, 1)
+            DrawLine(a3, a4, 1)
+            DrawLine(a4, a1, 1)
         }
     }
 }
