@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.lniculae.animation_rendered_spring.dto.VideoFilesList;
+import com.lniculae.animation_rendered_spring.errors.VideoNotFound;
+import com.lniculae.animation_rendered_spring.executors.TaskStatus;
+import com.lniculae.animation_rendered_spring.executors.TaskStatusManager;
+import com.lniculae.animation_rendered_spring.executors.TaskStatus.StatusKind;
 import com.lniculae.animation_rendered_spring.storage.StorageFileNotFoundException;
 import com.lniculae.animation_rendered_spring.storage.StorageService;
 
@@ -23,10 +27,15 @@ import com.lniculae.animation_rendered_spring.storage.StorageService;
 public class FileController {
 
 	private final StorageService storageService;
+	private final TaskStatusManager taskStatusManager;
 
 	@Autowired
-	public FileController(StorageService storageService) {
+	public FileController(
+		StorageService storageService,
+		TaskStatusManager taskStatusManager
+	) {
 		this.storageService = storageService;
+		this.taskStatusManager = taskStatusManager;
 	}
 
 	@GetMapping("/")
@@ -41,12 +50,30 @@ public class FileController {
 
 	@GetMapping("/files/{filename:.+}")
 	@ResponseBody
-	public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+	public ResponseEntity<Resource> serveFile(@PathVariable String taskId) {
+		TaskStatus status = taskStatusManager.getStatus(taskId);
+		switch (status.getStatus()) {
+			case Started: 
+				throw new VideoNotFound("Video processing is in progress", StatusKind.Started);
+			case Unsuccessful: 
+				throw new VideoNotFound("Video render failed: " + status.getError(), StatusKind.Unsuccessful);	
+			case Unknown: 
+				throw new VideoNotFound("Video doesn't exist", StatusKind.Unknown);	
+			case Successful:
+				break;
+		}
 
-		Resource file = storageService.loadAsResource(filename);
+		Resource file;
 
-		if (file == null)
-			return ResponseEntity.notFound().build();
+		try {
+			file = storageService.loadAsResource(taskId+".mp4");
+			if (file == null) {
+				throw new VideoNotFound("", null);
+			}
+		} catch (StorageFileNotFoundException ex) {
+			throw new VideoNotFound("video file is missing, but it shoudn't. might have been removed", 
+			StatusKind.Unknown);
+		}
 
 		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
 				"attachment; filename=\"" + file.getFilename() + "\"").body(file);

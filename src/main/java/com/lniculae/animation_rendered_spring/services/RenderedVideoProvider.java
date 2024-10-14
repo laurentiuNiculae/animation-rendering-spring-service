@@ -12,6 +12,8 @@ import com.lniculae.AnimationOutput.AnimationFileRenderer;
 import com.lniculae.AnimationOutput.JavaAWTRenderer;
 import com.lniculae.AnimationParser.AnimationScriptParser;
 import com.lniculae.animation_rendered_spring.executors.AnimationRendererExecutor;
+import com.lniculae.animation_rendered_spring.executors.TaskStatus;
+import com.lniculae.animation_rendered_spring.executors.TaskStatus.StatusKind;
 import com.lniculae.animation_rendered_spring.storage.StorageService;
 
 @Service
@@ -72,5 +74,26 @@ public class RenderedVideoProvider {
             LOGGER.error("Error loading rendered video: " + ex.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving resource " + taskId);
         }
+    }
+    
+    public TaskStatus executeRenderVideo(String taskId, String script) {
+        TaskStatus videoStatus = renderExecutor.getVideoRenderStatus(taskId);
+        if (videoStatus.getStatus() != StatusKind.Unknown) {
+            return videoStatus;
+        }
+
+        var taskResult = parser.ParseString(script);
+        if (!taskResult.Ok()) {
+            LOGGER.error("failed to parse the script");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, taskResult.Err().getMessage());
+        }
+        
+        Task task = taskResult.Some();
+
+        AnimationFileRenderer animationRenderer = new JavaAWTRenderer(task, 600, 600, 60);
+
+        renderExecutor.executeRender(animationRenderer, "upload-dir", taskId);
+
+        return new TaskStatus(StatusKind.Started);
     }
 }

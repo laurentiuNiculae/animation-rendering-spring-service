@@ -3,7 +3,6 @@ package com.lniculae.animation_rendered_spring.dto;
 public class VideoUploadStatus {
     boolean successful;
 
-
     public VideoUploadStatus(boolean successful) {
         this.successful = successful;
     }

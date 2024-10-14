@@ -69,4 +69,8 @@ public class AnimationRendererExecutor {
 			return new Result<>(new Error(e.getMessage()));
 		}
 	}
+
+	public TaskStatus getVideoRenderStatus(String taskId) {
+		return taskStatusManager.getStatus(taskId);
+	}
 }
