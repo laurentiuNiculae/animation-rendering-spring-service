@@ -41,12 +41,15 @@ public class AnimationRendererExecutor {
 
 		public Result<Empty> call() {
 			taskStatusManager.updateStatus(taskId, new TaskStatus(StatusKind.Started));
-			
+
 			var result = renderer.renderToFile(filePath);
 			if (!result.Ok()) {
 				TaskStatus newStatus = new TaskStatus(StatusKind.Unsuccessful, result.Err().getMessage());
 				taskStatusManager.updateStatus(taskId, newStatus);
+				return result;
 			}
+
+			taskStatusManager.updateStatus(taskId, new TaskStatus(StatusKind.Successful));
 
 			return result;
 		}
@@ -58,8 +61,8 @@ public class AnimationRendererExecutor {
 	}
 
 	public Result<Empty> submitRender(AnimationFileRenderer renderer, String fileFolder, String taskId) {
-		String filePath = Paths.get(fileFolder, taskId+".mp4").toString();
-		Future<Result<Empty>> promise = executor.submit(new AnimationRendererTask(renderer, filePath, taskId+".mp4"));
+		String filePath = Paths.get(fileFolder, taskId).toString();
+		Future<Result<Empty>> promise = executor.submit(new AnimationRendererTask(renderer, filePath, taskId));
 
 		System.out.printf("Started processing task '%s'\n", taskId);
 

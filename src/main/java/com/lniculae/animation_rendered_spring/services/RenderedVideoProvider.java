@@ -64,10 +64,8 @@ public class RenderedVideoProvider {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while submiting the render task.");
         }
 
-        String videoId = taskId + ".mp4";
-
         try {
-            Resource file = storageService.loadAsResource(videoId);
+            Resource file = storageService.loadAsResource(taskId);
 
             return file;
         } catch (Exception ex) {   

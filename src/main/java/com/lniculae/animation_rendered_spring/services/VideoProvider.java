@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.lniculae.animation_rendered_spring.dto.VideoExecuteStatus;
+import com.lniculae.animation_rendered_spring.dto.VideoRenderingStatus;
 import com.lniculae.animation_rendered_spring.executors.TaskStatus;
 import com.lniculae.animation_rendered_spring.storage.StorageFileNotFoundException;
 import com.lniculae.animation_rendered_spring.storage.StorageService;
@@ -42,21 +42,19 @@ public class VideoProvider {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "oopsie doopsy from developer, sha algorithm is bad");
         }
 
-        String videoId = taskId+".mp4";
-
         Resource videoResource;
 
         try {
-            videoResource = storageService.loadAsResource(videoId);
+            videoResource = storageService.loadAsResource(taskId);
         } catch (StorageFileNotFoundException ex) {
             videoResource = renderedVideoProvider.getRenderedVideo(taskId, script);
         }
         
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-			"attachment; filename=\"" + videoResource.getFilename() + "\"").body(videoResource);
+			"attachment; filename=\"" + videoResource.getFilename()+".mp4" + "\"").body(videoResource);
     }
     
-    public ResponseEntity<VideoExecuteStatus> executeVideoRender(String script) {
+    public ResponseEntity<VideoRenderingStatus> executeVideoRender(String script) {
         String taskId = hashingService.sha256Hash(script);
         if (taskId == "") {
             LOGGER.error("could not get script digest");
@@ -65,15 +63,22 @@ public class VideoProvider {
 
         TaskStatus status = renderedVideoProvider.executeRenderVideo(taskId, script);        
 
-        String videoId = taskId+".mp4";
-
         URI uri = ServletUriComponentsBuilder
                     .fromCurrentContextPath()
-                    .path("/videos/" + videoId)
+                    .path("/files/" + taskId)
                     .build()
                     .toUri();
 
+        if (uri.getHost().equals("127.0.0.1")) {
+            uri = ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .host("localhost")
+                .path("/files/" + taskId)
+                .build()
+                .toUri();
+        }
+
         return ResponseEntity.ok().body(
-            new VideoExecuteStatus(status.getStatus(), uri.toString()));
+            new VideoRenderingStatus(status.getStatus(), uri.toString()));
     }
 }

@@ -48,16 +48,16 @@ public class FileController {
 		return ResponseEntity.ok().body(new VideoFilesList(videoList));
 	}
 
-	@GetMapping("/files/{filename:.+}")
+	@GetMapping("/files/{taskId:.+}")
 	@ResponseBody
 	public ResponseEntity<Resource> serveFile(@PathVariable String taskId) {
 		TaskStatus status = taskStatusManager.getStatus(taskId);
 		switch (status.getStatus()) {
-			case Started: 
+			case Started:
 				throw new VideoNotFound("Video processing is in progress", StatusKind.Started);
 			case Unsuccessful: 
 				throw new VideoNotFound("Video render failed: " + status.getError(), StatusKind.Unsuccessful);	
-			case Unknown: 
+			case Unknown:
 				throw new VideoNotFound("Video doesn't exist", StatusKind.Unknown);	
 			case Successful:
 				break;
@@ -66,17 +66,17 @@ public class FileController {
 		Resource file;
 
 		try {
-			file = storageService.loadAsResource(taskId+".mp4");
+			file = storageService.loadAsResource(taskId);
 			if (file == null) {
 				throw new VideoNotFound("", null);
 			}
 		} catch (StorageFileNotFoundException ex) {
 			throw new VideoNotFound("video file is missing, but it shoudn't. might have been removed", 
-			StatusKind.Unknown);
+				StatusKind.Unknown);
 		}
 
 		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-				"attachment; filename=\"" + file.getFilename() + "\"").body(file);
+				"attachment; filename=\"" + file.getFilename()+".mp4" + "\"").body(file);
 	}
 
 	// @PostMapping("/")

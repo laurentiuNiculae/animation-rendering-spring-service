@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lniculae.animation_rendered_spring.dto.VideoExecuteStatus;
+import com.lniculae.animation_rendered_spring.dto.VideoRenderingStatus;
 import com.lniculae.animation_rendered_spring.executors.AnimationRendererExecutor;
 import com.lniculae.animation_rendered_spring.services.VideoProvider;
 import com.lniculae.animation_rendered_spring.storage.StorageService;
@@ -28,7 +28,8 @@ public class ImageRenderingController {
         return videoProvider.getVideoResource(script);
     }
 
-    public ResponseEntity<VideoExecuteStatus> executeVideoRender(@RequestBody String script) {
+    @PostMapping("/script")
+    public ResponseEntity<VideoRenderingStatus> executeVideoRender(@RequestBody String script) {
         return videoProvider.executeVideoRender(script);
     }
 
